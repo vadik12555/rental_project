@@ -1,6 +1,6 @@
 from rest_framework import viewsets , filters
-from .models import Item
-from .serializers import ItemSerializer
+from .models import Item , Order
+from .serializers import ItemSerializer  , OrderSerializer
 
 class ItemViewSet(viewsets.ModelViewSet):
     queryset = Item.objects.all()
@@ -8,3 +8,7 @@ class ItemViewSet(viewsets.ModelViewSet):
 
     filter_backends = [filters.SearchFilter]
     search_fields = ['title']
+
+class OrderViewSet(viewsets.ModelViewSet):
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
