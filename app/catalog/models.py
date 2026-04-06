@@ -19,7 +19,21 @@ class Order(models.Model):
     items = models.ManyToManyField(Item, related_name='orders', verbose_name="Товары")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
     total_price = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Общая стоимость")
+    
     status = models.CharField(max_length=20, default='pending')
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        super().save(*args, **kwargs)
+        if not is_new:
+            self.update_total_price()
+
+    def update_total_price(self):
+        # Считаем сумму цен всех товаров
+        total = sum(item.price for item in self.items.all())
+        # Обновляем только поле total_price, чтобы не вызывать save() по кругу
+        Order.objects.filter(pk=self.pk).update(total_price=total)
+        
+        
 
 class Meta:
     verbos_name = 'Заказ'
