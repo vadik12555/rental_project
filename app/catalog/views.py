@@ -1,19 +1,22 @@
-from rest_framework import viewsets , filters  ,permissions 
-from .models import Item , Order
-from .serializers import ItemSerializer  ,  OrderSerializer
+from rest_framework import viewsets, permissions
+from django.shortcuts import render
+from .models import Item, Order
+from .serializers import ItemSerializer, OrderSerializer
 
 class ItemViewSet(viewsets.ModelViewSet):
     queryset = Item.objects.all()
     serializer_class = ItemSerializer
-    filter_backends = [filters.SearchFilter]
-    search_fields = ['title']
-    
-    
+    # Фильтры убрали, так как библиотека не установилась
 
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
-    permisions = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         return Order.objects.filter(user=self.request.user)
+
+def item_list(request):
+    items = Item.objects.all()
+    # Django будет искать catalog/index.html внутри папки templates
+    return render(request, 'catalog/index.html', {'items': items})
