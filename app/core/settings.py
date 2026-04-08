@@ -56,8 +56,8 @@ ROOT_URLCONF = 'core.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
+        'DIRS': [],  # ПУСТОЙ список, это важно!
+        'APP_DIRS': True, # Это заставит Django искать внутри catalog/templates/
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
