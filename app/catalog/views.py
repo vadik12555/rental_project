@@ -18,4 +18,9 @@ class OrderViewSet(viewsets.ModelViewSet):
 
 def item_list(request):
     items = Item.objects.all()
+    query = request.GET.get('q')
+    if query:
+        items = Item.objects.filter(name__icontains=query)
+    else:
+        items = Item.objects.all()
     return render(request, 'catalog/index.html', {'items': items})
