@@ -18,5 +18,4 @@ class OrderViewSet(viewsets.ModelViewSet):
 
 def item_list(request):
     items = Item.objects.all()
-    # Django будет искать catalog/index.html внутри папки templates
     return render(request, 'catalog/index.html', {'items': items})
