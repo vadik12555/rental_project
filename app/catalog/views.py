@@ -4,7 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from .models import Item, Order
 from .serializers import ItemSerializer, OrderSerializer
 
-
+# --- ТВОЙ ОРИГИНАЛЬНЫЙ СПИСОК ТОВАРОВ С ПОИСКОМ ---
 def item_list(request):
     items = Item.objects.all()
     query = request.GET.get('q')
@@ -15,18 +15,19 @@ def item_list(request):
     return render(request, 'catalog/index.html', {'items': items})
 
 
-
+# --- API ДЛЯ ТОВАРОВ ---
 class ItemViewSet(viewsets.ModelViewSet):
     queryset = Item.objects.all()
     serializer_class = ItemSerializer
+    # Здесь права доступа не ограничены, чтобы все видели товары
 
 
-
-# --- API ДЛЯ ЗАКАЗОВ (С ЗАЩИТОЙ) 
+# --- API ДЛЯ ЗАКАЗОВ (С ЗАЩИТОЙ) ---
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    # ИСПРАВЛЕНО: используем напрямую импортированный IsAuthenticated
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         # Чтобы каждый видел только свои заказы
