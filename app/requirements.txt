@@ -6,3 +6,4 @@ python-dotenv==1.0.1
 Pillow
 djangorestframework-simplejwt
 django-redis
+drf-spectacular

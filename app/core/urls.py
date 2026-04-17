@@ -5,6 +5,7 @@ from django.conf.urls.static import static
 from rest_framework.routers import DefaultRouter
 from catalog.views import ItemViewSet, OrderViewSet, item_list, CartAPIView 
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 
 router = DefaultRouter()
@@ -17,7 +18,9 @@ urlpatterns = [
     path('shop/', item_list, name='shop'),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('cart/', CartAPIView.as_view(), name='cart_api'), # УБЕДИСЬ, ЧТО ТУТ НЕТ ОШИБОК В СКОБКАХ
+    path('cart/', CartAPIView.as_view(), name='cart_api'), 
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
 ]
 
 # Чтобы работали картинки, если ты их загружаешь

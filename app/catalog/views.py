@@ -34,35 +34,29 @@ class OrderViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        # Каждый видит только свои заказы
         return Order.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
-        # Получаем данные из корзины или напрямую из запроса
-        # В данном примере допустим, что в заказе передается список товаров
-        
+        # Оборачиваем в транзакцию: или всё сработает, или ничего
         with transaction.atomic():
-            # Это наша транзакция. Если внутри случится ошибка, 
-            # никакие изменения в базе не сохранятся.
+            # 1. Сначала сохраняем заказ
+            order = serializer.save(user=self.request.user)
             
-            # 1. Сохраняем заказ (но пока не фиксируем окончательно)
-            instance = serializer.save(user=self.request.user)
-            
-            # 2. Логика проверки и списания остатков
-            # Допустим, у заказа есть связь с товарами (Items)
-            for order_item in instance.items.all():
-                item = order_item.item
-                if item.stock < order_item.quantity:
+            # 2. Проверяем товары и списываем остатки
+            # (ВАЖНО: у тебя в модели Order должна быть связь с товарами через items)
+            for order_item in order.items.all():
+                product = order_item.item
+                if product.stock < order_item.quantity:
+                    # Если товара мало, отменяем ВЕСЬ заказ (rollback)
                     raise ValidationError(
-                        f"Недостаточно товара {item.name} на складе. "
-                        f"Осталось: {item.stock}"
+                        f"Недостаточно товара {product.name}. В наличии: {product.stock}"
                     )
                 
-                # Вычитаем количество
-                item.stock -= order_item.quantity
-                item.save()
+                # 3. Вычитаем из базы
+                product.stock -= order_item.quantity
+                product.save()
 
-                
+
 class CartAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
