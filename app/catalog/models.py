@@ -1,5 +1,9 @@
 from django.db import models
 from django.contrib.auth.models import User
+from .models import Order, Item
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect
+from django.contrib import messages
 
 # Create your models here.
 
@@ -74,3 +78,10 @@ class Product(models.Model):
         
     def __str__(self):
         return f"{self.name} (Осталось: {self.stock})"
+    
+    
+
+@login_required
+def my_orders(request):
+    orders = Order.objects.filter(user=request.user).order_by('-created_at')
+    return render(request, 'catalog/orders.html', {'orders': orders})

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Мои заказы</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <nav class="navbar navbar-dark bg-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="/shop/">TechStore</a>
+            <a href="{% url 'my_orders' %}" class="btn btn-outline-light btn-sm">Мои заказы</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h2>Мои заказы</h2>
+        <div class="list-group mt-3">
+            {% for order in orders %}
+                <div class="list-group-item mb-3 shadow-sm">
+                    <div class="d-flex justify-content-between w-100">
+                        <h5 class="mb-1">Заказ №{{ order.id }}</h5>
+                        <small class="text-muted">{{ order.created_at|date:"d.m.Y H:i" }}</small>
+                    </div>
+                    <p class="mb-1">Статус: <strong>{{ order.get_status_display }}</strong></p>
+                    <p class="mb-1">Сумма: <strong>{{ order.total_price }} ₽</strong></p>
+                </div>
+            {% empty %}
+                <div class="alert alert-info">У тебя еще нет заказов. Время что-нибудь купить!</div>
+            {% endfor %}
+        </div>
+        <a href="/shop/" class="btn btn-primary mt-3">Вернуться в магазин</a>
+    </div>
+</body>
+</html>
