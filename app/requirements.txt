@@ -7,3 +7,5 @@ Pillow
 djangorestframework-simplejwt
 django-redis
 drf-spectacular
+celery
+redis
