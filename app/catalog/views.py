@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render  ,redirect
 from rest_framework.views import APIView     
 from rest_framework.response import Response  
 from rest_framework import viewsets, permissions, generics , status
@@ -9,6 +9,7 @@ from .serializers import ItemSerializer, OrderSerializer
 from .cart import Cart
 from django.db import transaction
 from rest_framework.exceptions import ValidationError
+from django.contrib.auth.decorators import login_required
 
 # --- ТВОЙ ОРИГИНАЛЬНЫЙ СПИСОК ТОВАРОВ С ПОИСКОМ ---
 def item_list(request):
@@ -43,8 +44,6 @@ class OrderViewSet(viewsets.ModelViewSet):
             # 1. Сначала сохраняем заказ
             order = serializer.save(user=self.request.user)
             
-            # 2. Проверяем товары и списываем остатки
-            # (ВАЖНО: у тебя в модели Order должна быть связь с товарами через items)
             for order_item in order.items.all():
                 product = order_item.item
                 if product.stock < order_item.quantity:
@@ -99,3 +98,9 @@ class CartAPIView(APIView):
         item = Item.objects.get(id=item_id)
         cart.add(item=item)
         return Response({"message": "Товар добавлен в корзину"})
+
+@login_required
+def my_orders(request):
+# Эта функция берет все заказы текущего юзера и отдает их в шаблон
+    orders = Order.objects.filter(user=request.user).order_by('-created_at')
+    return render(request, 'catalog/orders.html', {'orders': orders})

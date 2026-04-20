@@ -6,8 +6,8 @@ from rest_framework.routers import DefaultRouter
 from catalog.views import ItemViewSet, OrderViewSet, item_list, CartAPIView 
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
-from . import views
 
+from catalog import views as catalog_views
 
 router = DefaultRouter()
 router.register(r'items', ItemViewSet)
@@ -22,7 +22,7 @@ urlpatterns = [
     path('cart/', CartAPIView.as_view(), name='cart_api'), 
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
-    path('my-orders/', views.my_orders, name='my_orders'),
+    path('my-orders/', catalog_views.my_orders, name='my_orders'),
 ]
 
 # Чтобы работали картинки, если ты их загружаешь
