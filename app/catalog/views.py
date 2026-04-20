@@ -79,7 +79,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             messages.error(request, "Товар не найден.")
 
         
-        return redirect('/')
+        return redirect('shop')
 
 
 class CartAPIView(APIView):
