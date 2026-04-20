@@ -10,16 +10,21 @@ from .cart import Cart
 from django.db import transaction
 from rest_framework.exceptions import ValidationError
 from django.contrib.auth.decorators import login_required
+from django.core.cache import cache
 
-# --- ТВОЙ ОРИГИНАЛЬНЫЙ СПИСОК ТОВАРОВ С ПОИСКОМ ---
 def item_list(request):
-    items = Item.objects.all()
-    query = request.GET.get('q')
-    if query:
-        items = Item.objects.filter(name__icontains=query)
-    else:
+    # Пытаемся вытянуть список из кэша
+    items = cache.get('catalog_items')
+    
+    if not items:
+        # Если в кэше пусто — идем в базу
         items = Item.objects.all()
-    #вернем
+        # Сохраняем в Redis на 15 минут
+        cache.set('catalog_items', items, 60 * 15)
+        print("--- Данные взяты из PostgreSQL ---")
+    else:
+        print("Данные прилетели из Redis")
+        
     return render(request, 'catalog/index.html', {'items': items})
 
 
