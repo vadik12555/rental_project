@@ -11,6 +11,7 @@ from django.db import transaction
 from rest_framework.exceptions import ValidationError
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
+from .tasks import send_order_confirmation
 
 def item_list(request):
     # Пытаемся вытянуть список из кэша
@@ -73,18 +74,23 @@ class OrderViewSet(viewsets.ModelViewSet):
             if product.stock >= quantity:
                 product.stock -= quantity
                 product.save() 
+
+                response = super().create(request, *args, **kwargs)
                 
                 super().create(request, *args, **kwargs)
                 
                 messages.success(request, f"Заказ на {product.title} оформлен!")
+                return response
             else:
                 messages.error(request, f"Ошибка: на складе всего {product.stock} шт.")
                 
         except Item.DoesNotExist:
             messages.error(request, "Товар не найден.")
+            
 
         
         return redirect('shop')
+
 
 
 class CartAPIView(APIView):
