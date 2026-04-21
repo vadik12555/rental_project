@@ -10,6 +10,7 @@ class OrderAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'total_price', 'status', 'created_at') # Добавили status
     list_filter = ('status', 'created_at') # Добавили фильтр справа
     list_editable = ('status',) # Позволяет менять статус прямо в списке!
+    readonly_fields = ('created_at', 'total_price')
 
 
 @admin.register(Item)
