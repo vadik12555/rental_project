@@ -61,34 +61,33 @@ class OrderViewSet(viewsets.ModelViewSet):
                 # 3. Вычитаем из базы
                 product.stock -= order_item.quantity
                 product.save()
+def create(self, request, *args, **kwargs):
+        item_id = request.data.get('item_id')
+        quantity = int(request.data.get('quantity', 1))
 
-    def create(self, request, *args, **kwargs):
-        # 1. Получаем данные из формы (ORM в деле)
-        item_id = request.data.get('items[0]item')
-        quantity = int(request.data.get('items[0]quantity', 1))
-        
         try:
             product = Item.objects.get(id=item_id)
-            
-            # 2. Проверяем остатки (Важная бизнес-логика)
             if product.stock >= quantity:
                 product.stock -= quantity
-                product.save() 
+                product.save()
 
+                # Сначала создаем заказ через DRF
                 response = super().create(request, *args, **kwargs)
                 
-                super().create(request, *args, **kwargs)
+                # Получаем ID созданного заказа
+                order_id = self.get_serializer(response.data).instance.id
                 
+                # ЗАПУСКАЕМ ЗАДАЧУ ЗДЕСЬ
+                from .tasks import send_order_confirmation
+                send_order_confirmation.delay(order_id)
+
                 messages.success(request, f"Заказ на {product.title} оформлен!")
                 return response
             else:
                 messages.error(request, f"Ошибка: на складе всего {product.stock} шт.")
-                
         except Item.DoesNotExist:
             messages.error(request, "Товар не найден.")
             
-
-        
         return redirect('shop')
 
 
