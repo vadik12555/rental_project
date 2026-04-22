@@ -61,6 +61,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 # 3. Вычитаем из базы
                 product.stock -= order_item.quantity
                 product.save()
+                
 def create(self, request, *args, **kwargs):
         item_id = request.data.get('item_id')
         quantity = int(request.data.get('quantity', 1))
@@ -81,7 +82,7 @@ def create(self, request, *args, **kwargs):
                 from .tasks import send_order_confirmation
                 send_order_confirmation.delay(order_id)
 
-                messages.success(request, f"Заказ на {product.title} оформлен!")
+                
                 return response
             else:
                 messages.error(request, f"Ошибка: на складе всего {product.stock} шт.")

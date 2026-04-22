@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Item, Order, OrderItem
+from .models import Item, Order, Product  
 from django.utils.safestring import mark_safe
 
 admin.site.register(Item)
@@ -25,7 +25,7 @@ class ItemAdmin(admin.ModelAdmin):
         if obj.image:
             return mark_safe(f'<img src="{obj.image.url}" width="100" />')
         return "Нет фото"
-    get_html_photo_big.short_description = "Превью"
+    get_image_preview.short_description = "Превью"
     
     # Позволяет добавлять/удалять товары прямо на странице заказа
 class OrderItemInline(admin.TabularInline):
