@@ -22,7 +22,7 @@ def item_list(request):
         items = Item.objects.all()
         # Сохраняем в Redis на 15 минут
         cache.set('catalog_items', items, 60 * 15)
-        print("--- Данные взяты из PostgreSQL ---")
+        print("--- Данные взяты из Postgres ---")
     else:
         print("Данные прилетели из Redis")
         
