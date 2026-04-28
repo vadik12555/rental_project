@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework import viewsets, permissions, generics , status
 from rest_framework.permissions import IsAuthenticated
 from django.contrib import messages
-from .models import Item, Order
+from .models import Item, Order, OrderItem
 from .serializers import ItemSerializer, OrderSerializer
 from .cart import Cart
 from django.db import transaction
@@ -45,51 +45,46 @@ class OrderViewSet(viewsets.ModelViewSet):
         return Order.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
-        # Оборачиваем в транзакцию: или всё сработает, или ничего
+        items_input = serializer.validated_data.get('items_input') or []
+        if not items_input:
+            raise ValidationError("items_input обязателен и не должен быть пустым.")
+
         with transaction.atomic():
-            # 1. Сначала сохраняем заказ
-            order = serializer.save(user=self.request.user)
-            
-            for order_item in order.items.all():
-                product = order_item.item
-                if product.stock < order_item.quantity:
-                    # Если товара мало, отменяем ВЕСЬ заказ (rollback)
+            order = Order.objects.create(user=self.request.user)
+
+            total_price = 0
+            for row in items_input:
+                item_id = row['item_id']
+                quantity = row['quantity']
+
+                try:
+                    item = Item.objects.select_for_update().get(id=item_id)
+                except Item.DoesNotExist:
+                    raise ValidationError(f"Товар с id={item_id} не найден.")
+
+                if item.stock < quantity:
                     raise ValidationError(
-                        f"Недостаточно товара {product.name}. В наличии: {product.stock}"
+                        f"Недостаточно товара {item.title}. В наличии: {item.stock}"
                     )
-                
-                # 3. Вычитаем из базы
-                product.stock -= order_item.quantity
-                product.save()
-                
-def create(self, request, *args, **kwargs):
-        item_id = request.data.get('item_id')
-        quantity = int(request.data.get('quantity', 1))
 
-        try:
-            product = Item.objects.get(id=item_id)
-            if product.stock >= quantity:
-                product.stock -= quantity
-                product.save()
+                item.stock -= quantity
+                item.save(update_fields=['stock'])
 
-                # Сначала создаем заказ через DRF
-                response = super().create(request, *args, **kwargs)
-                
-                # Получаем ID созданного заказа
-                order_id = self.get_serializer(response.data).instance.id
-                
-                # ЗАПУСКАЕМ ЗАДАЧУ ЗДЕСЬ
-                from .tasks import send_order_confirmation
-                send_order_confirmation.delay(order_id)
+                OrderItem.objects.create(order=order, item=item, quantity=quantity)
+                total_price += item.price * quantity
 
-                
-                return response
-            else:
-                messages.error(request, f"Ошибка: на складе всего {product.stock} шт.")
-        except Item.DoesNotExist:
-            messages.error(request, "Товар не найден.")
-            
-        return redirect('shop')
+            Order.objects.filter(pk=order.pk).update(total_price=total_price)
+
+            transaction.on_commit(lambda: send_order_confirmation.delay(order.id))
+
+            serializer.instance = order
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
 
