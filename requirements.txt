@@ -9,3 +9,4 @@ django-redis
 drf-spectacular
 celery
 redis
+drf-spectacular

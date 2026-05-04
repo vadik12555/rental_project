@@ -27,11 +27,10 @@ class Order(models.Model):
     ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE , related_name='orders', verbose_name="Покупатель")
-    items = models.ManyToManyField(Item, related_name='orders', verbose_name="Товары")
+    items = models.ManyToManyField(Item, through='OrderItem', related_name='orders', verbose_name="Товары")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
     total_price = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Общая стоимость")
-
-    status = models.CharField(max_length=20, default='pending')
+    stock_restored = models.BooleanField(default=False)
 
     status = models.CharField(
         max_length=20,
@@ -46,18 +45,24 @@ class Order(models.Model):
         is_new = self.pk is None
         super().save(*args, **kwargs)
         if  is_new:
-            for item in self.items.all():
-                if item.stock > 0:
-                    item.stock -= 1 
-                    item.save()
-
             self.update_total_price()
 
     def update_total_price(self):
-        # Считаем сумму цен всех товаров
-        total = sum(item.price for item in self.items.all())
+        total = sum(oi.item.price * oi.quantity for oi in self.order_items.select_related('item').all())
         # Обновляем только поле total_price, чтобы не вызывать save() по кругу
         Order.objects.filter(pk=self.pk).update(total_price=total)
+
+
+class OrderItem(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='order_items')
+    item = models.ForeignKey(Item, on_delete=models.PROTECT, related_name='order_items')
+    quantity = models.PositiveIntegerField(default=1)
+
+    class Meta:
+        unique_together = (('order', 'item'),)
+
+    def __str__(self):
+        return f"OrderItem(order_id={self.order_id}, item_id={self.item_id}, quantity={self.quantity})"
         
         
 

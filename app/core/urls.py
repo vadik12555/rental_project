@@ -5,7 +5,11 @@ from django.conf.urls.static import static
 from rest_framework.routers import DefaultRouter
 from catalog.views import ItemViewSet, OrderViewSet, item_list, CartAPIView 
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
+from drf_spectacular.views import (
+    SpectacularAPIView,
+    SpectacularRedocView,
+    SpectacularSwaggerView,
+)
 from django.views.generic import RedirectView
 from catalog import views as catalog_views
 
@@ -22,6 +26,7 @@ urlpatterns = [
     path('cart/', CartAPIView.as_view(), name='cart_api'), 
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
     path('my-orders/', catalog_views.my_orders, name='my_orders'),
     path('', RedirectView.as_view(url='/shop/', permanent=True)), 
 ]
