@@ -81,12 +81,12 @@
                         <div class="text-muted">Итого:</div>
                         <div class="fw-bold">{{ cart_total }} ₽</div>
                     </div>
-                    <button class="btn btn-warning w-100 mt-3 fw-semibold" type="button" disabled>
-                        <i class="fa-solid fa-bag-shopping me-2"></i>Оформить заказ
-                    </button>
-                    <div class="text-muted small mt-2">
-                        На следующем шаге можно будет оформить заказ из корзины.
-                    </div>
+                    <form action="{% url 'cart_checkout' %}" method="POST" class="mt-3">
+                        {% csrf_token %}
+                        <button class="btn btn-warning w-100 fw-semibold" type="submit">
+                            <i class="fa-solid fa-bag-shopping me-2"></i>Оформить заказ
+                        </button>
+                    </form>
                 </div>
             </div>
         {% else %}

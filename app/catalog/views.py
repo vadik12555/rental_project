@@ -77,6 +77,52 @@ def cart_remove(request, item_id: int):
     return redirect("cart_detail")
 
 
+@login_required
+def cart_checkout(request):
+    if request.method != "POST":
+        return redirect("cart_detail")
+
+    cart = Cart(request)
+    cart_rows = list(cart.iter_items())
+    if not cart_rows:
+        messages.info(request, "Корзина пуста — добавь товары перед оформлением заказа.")
+        return redirect("cart_detail")
+
+    with transaction.atomic():
+        # Lock all items used in cart to make stock checks safe.
+        item_ids = [row["item"].id for row in cart_rows]
+        locked_items = {
+            i.id: i for i in Item.objects.select_for_update().filter(id__in=item_ids)
+        }
+
+        # Validate stock for each row.
+        for row in cart_rows:
+            locked_item = locked_items.get(row["item"].id)
+            if not locked_item:
+                raise ValidationError("Товар из корзины не найден.")
+            if locked_item.stock < row["quantity"]:
+                raise ValidationError(
+                    f"Недостаточно товара {locked_item.title}. В наличии: {locked_item.stock}"
+                )
+
+        order = Order.objects.create(user=request.user)
+        total_price = 0
+
+        for row in cart_rows:
+            locked_item = locked_items[row["item"].id]
+            qty = row["quantity"]
+            OrderItem.objects.create(order=order, item=locked_item, quantity=qty)
+            total_price += locked_item.price * qty
+
+        Order.objects.filter(pk=order.pk).update(total_price=total_price)
+
+        # Clear cart only after successful DB operations.
+        cart.clear()
+
+    messages.success(request, "Заказ успешно оформлен.")
+    return redirect("my_orders")
+
+
 # --- API ДЛЯ ТОВАРОВ ---
 class ItemViewSet(viewsets.ModelViewSet):
     queryset = Item.objects.all()
@@ -114,9 +160,6 @@ class OrderViewSet(viewsets.ModelViewSet):
                     raise ValidationError(
                         f"Недостаточно товара {item.title}. В наличии: {item.stock}"
                     )
-
-                item.stock -= quantity
-                item.save(update_fields=['stock'])
 
                 OrderItem.objects.create(order=order, item=item, quantity=quantity)
                 total_price += item.price * quantity
