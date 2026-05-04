@@ -10,3 +10,4 @@ drf-spectacular
 celery
 redis
 drf-spectacular
+pytest-django

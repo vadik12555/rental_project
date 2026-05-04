@@ -3,7 +3,7 @@ from django.db.models import F
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 
-from .models import Order
+from .models import Order, OrderItem
 
 
 FINAL_STATUSES = {"completed", "canceled"}
@@ -18,6 +18,30 @@ def order_store_previous_status(sender, instance: Order, **kwargs):
     instance._previous_status = (
         sender.objects.filter(pk=instance.pk).values_list("status", flat=True).first()
     )
+
+
+@receiver(post_save, sender=OrderItem)
+def order_item_decrease_stock_on_create(
+    sender, instance: OrderItem, created: bool, **kwargs
+):
+    """
+    When an OrderItem is created, decrease Item.stock accordingly.
+
+    This keeps model-level behavior consistent with Order creation,
+    so tests and admin actions behave the same as API order creation.
+    """
+    if not created:
+        return
+
+    # If the order is already finalized/canceled, don't mutate stock.
+    # (Stock restoration is handled on Order status transition.)
+    if instance.order.status in FINAL_STATUSES:
+        return
+
+    with transaction.atomic():
+        instance.item.__class__.objects.filter(pk=instance.item_id).update(
+            stock=F("stock") - instance.quantity
+        )
 
 
 @receiver(post_save, sender=Order)
