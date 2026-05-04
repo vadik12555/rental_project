@@ -1,4 +1,4 @@
-from django.shortcuts import render  ,redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from rest_framework.views import APIView     
 from rest_framework.response import Response  
 from rest_framework import viewsets, permissions, generics , status
@@ -27,6 +27,54 @@ def item_list(request):
         print("Данные прилетели из Redis")
         
     return render(request, 'catalog/index.html', {'items': items})
+
+def cart_detail(request):
+    cart = Cart(request)
+    return render(
+        request,
+        "catalog/cart.html",
+        {"cart_items": list(cart.iter_items()), "cart_total": cart.get_total_price()},
+    )
+
+
+def cart_add(request, item_id: int):
+    if request.method != "POST":
+        return redirect("shop")
+
+    cart = Cart(request)
+    item = get_object_or_404(Item, pk=item_id)
+    cart.add(item=item, quantity=1)
+    messages.success(request, f"Товар «{item.title}» добавлен в корзину.")
+    return redirect("shop")
+
+
+def cart_update(request, item_id: int):
+    if request.method != "POST":
+        return redirect("cart_detail")
+
+    cart = Cart(request)
+    item = get_object_or_404(Item, pk=item_id)
+    qty = request.POST.get("quantity", "1")
+    try:
+        qty_int = int(qty)
+    except ValueError:
+        qty_int = 1
+
+    if qty_int < 1:
+        cart.remove(item)
+    else:
+        cart.add(item=item, quantity=qty_int, override=True)
+    return redirect("cart_detail")
+
+
+def cart_remove(request, item_id: int):
+    if request.method != "POST":
+        return redirect("cart_detail")
+
+    cart = Cart(request)
+    item = get_object_or_404(Item, pk=item_id)
+    cart.remove(item)
+    return redirect("cart_detail")
 
 
 # --- API ДЛЯ ТОВАРОВ ---
@@ -95,7 +143,7 @@ class CartAPIView(APIView):
         cart = Cart(request)
         return Response({
             "items": cart.cart,
-            "total_price": cart.get_total_price()
+            "total_price": str(cart.get_total_price()),
         })
 
     def post(self, request):

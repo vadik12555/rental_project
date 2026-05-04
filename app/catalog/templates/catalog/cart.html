@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Корзина</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="/shop/">TechStore</a>
+            <div class="navbar-nav me-auto">
+                <a class="nav-link" href="/shop/">Каталог</a>
+                <a class="nav-link" href="/my-orders/">Мои заказы</a>
+            </div>
+            <a class="btn btn-outline-warning btn-sm" href="/cart/">
+                <i class="fa-solid fa-cart-shopping me-2"></i>Корзина [{{ cart_count|default:0 }}]
+            </a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="mb-0">Корзина</h2>
+            <a class="btn btn-outline-secondary btn-sm" href="/shop/">Продолжить покупки</a>
+        </div>
+
+        {% if cart_items %}
+            <div class="table-responsive">
+                <table class="table align-middle bg-white shadow-sm">
+                    <thead>
+                        <tr>
+                            <th>Товар</th>
+                            <th class="text-center" style="width: 160px;">Количество</th>
+                            <th class="text-end">Цена</th>
+                            <th class="text-end">Итого</th>
+                            <th class="text-end" style="width: 120px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in cart_items %}
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold">{{ row.item.title }}</div>
+                                    <div class="text-muted small">{{ row.item.description|default:"" }}</div>
+                                </td>
+                                <td class="text-center">
+                                    <form action="{% url 'cart_update' row.item.id %}" method="POST" class="d-flex justify-content-center gap-2">
+                                        {% csrf_token %}
+                                        <input
+                                            class="form-control form-control-sm text-center"
+                                            type="number"
+                                            min="1"
+                                            name="quantity"
+                                            value="{{ row.quantity }}"
+                                            style="width: 80px;"
+                                        >
+                                        <button class="btn btn-sm btn-primary" type="submit">OK</button>
+                                    </form>
+                                </td>
+                                <td class="text-end">{{ row.price }} ₽</td>
+                                <td class="text-end fw-semibold">{{ row.total_price }} ₽</td>
+                                <td class="text-end">
+                                    <form action="{% url 'cart_remove' row.item.id %}" method="POST" class="d-inline">
+                                        {% csrf_token %}
+                                        <button class="btn btn-sm btn-outline-danger" type="submit">
+                                            Удалить
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="d-flex justify-content-end">
+                <div class="bg-white border rounded p-3 shadow-sm" style="min-width: 280px;">
+                    <div class="d-flex justify-content-between">
+                        <div class="text-muted">Итого:</div>
+                        <div class="fw-bold">{{ cart_total }} ₽</div>
+                    </div>
+                    <button class="btn btn-warning w-100 mt-3 fw-semibold" type="button" disabled>
+                        <i class="fa-solid fa-bag-shopping me-2"></i>Оформить заказ
+                    </button>
+                    <div class="text-muted small mt-2">
+                        На следующем шаге можно будет оформить заказ из корзины.
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="alert alert-info">
+                Корзина пуста. Добавь товары из каталога.
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>
+
