@@ -11,22 +11,29 @@ from django.db import transaction
 from rest_framework.exceptions import ValidationError
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
+from django.db.models import Q
 from .tasks import send_order_confirmation
 
 def item_list(request):
-    # Пытаемся вытянуть список из кэша
-    items = cache.get('catalog_items')
-    
-    if not items:
-        # Если в кэше пусто — идем в базу
-        items = Item.objects.all()
-        # Сохраняем в Redis на 15 минут
-        cache.set('catalog_items', items, 60 * 15)
-        print("--- Данные взяты из Postgres ---")
+    q = request.GET.get("q", "").strip()
+
+    # Базовый queryset
+    items_qs = Item.objects.all()
+
+    # Поиск по названию и описанию, нечувствительный к регистру
+    if q:
+        items_qs = items_qs.filter(
+            Q(title__icontains=q) | Q(description__icontains=q)
+        )
+        items = list(items_qs)
     else:
-        print("Данные прилетели из Redis")
-        
-    return render(request, 'catalog/index.html', {'items': items})
+        # Только для полного списка используем кэш
+        items = cache.get("catalog_items")
+        if items is None:
+            items = list(items_qs)
+            cache.set("catalog_items", items, 60 * 15)
+
+    return render(request, "catalog/index.html", {"items": items, "q": q})
 
 def cart_detail(request):
     cart = Cart(request)
