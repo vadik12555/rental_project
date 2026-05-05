@@ -24,6 +24,9 @@ services:
       - DATABASE_URL=postgres://postgres:postgres@db:5432/postgres
       - PYTHONPATH=/code:/code/app  # Это решит проблему с core
       - PYTHONDONTWRITEBYTECODE=1
+      - DJANGO_SUPERUSER_USERNAME=admin
+      - DJANGO_SUPERUSER_EMAIL=admin@example.com
+      - DJANGO_SUPERUSER_PASSWORD=admin12345
     depends_on:
       - db
       - redis
@@ -37,6 +40,9 @@ services:
       - DATABASE_URL=postgres://postgres:postgres@db:5432/postgres
       - PYTHONPATH=/code:/code/app
       - PYTHONDONTWRITEBYTECODE=1
+      - DJANGO_SUPERUSER_USERNAME=admin
+      - DJANGO_SUPERUSER_EMAIL=admin@example.com
+      - DJANGO_SUPERUSER_PASSWORD=admin12345
     depends_on:
       - db
       - redis
