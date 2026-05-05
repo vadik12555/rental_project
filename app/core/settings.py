@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'catalog.apps.CatalogConfig',
+    'users.apps.UsersConfig',
     'drf_spectacular'
 ]
 
@@ -172,6 +173,10 @@ CELERY_TASK_SERIALIZER = 'json'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+LOGIN_URL = "/login/"
+LOGIN_REDIRECT_URL = "/shop/"
+LOGOUT_REDIRECT_URL = "/shop/"
 
 
 

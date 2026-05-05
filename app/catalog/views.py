@@ -44,6 +44,7 @@ def cart_detail(request):
     )
 
 
+@login_required
 def cart_add(request, item_id: int):
     if request.method != "POST":
         return redirect("shop")
