@@ -30,6 +30,9 @@ router.register(r'orders', OrderViewSet)
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
     path("", include("users.urls")),
     path('shop/', item_list, name='shop'),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
@@ -40,11 +43,8 @@ urlpatterns = [
     path('cart/update/<int:item_id>/', cart_update, name='cart_update'),
     path('cart/remove/<int:item_id>/', cart_remove, name='cart_remove'),
     path('cart/checkout/', cart_checkout, name='cart_checkout'),
-    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
-    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
-    path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
     path('my-orders/', catalog_views.my_orders, name='my_orders'),
-    path('', RedirectView.as_view(url='/shop/', permanent=True)), 
+    path('', RedirectView.as_view(url='/shop/', permanent=True)),
 ]
 
 # Чтобы работали картинки, если ты их загружаешь

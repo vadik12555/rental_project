@@ -49,8 +49,8 @@
         <a class="btn btn-primary btn-sm" href="{% url 'signup' %}">Регистрация</a>
     {% endif %}
 </div>
-<form class="d-flex" action="/shop/" method="get">
-    <input class="form-control me-2" type="search" name="q" placeholder="Поиск товара..." aria-label="Search">
+<form class="d-flex" action="/shop/" method="GET">
+    <input class="form-control me-2" type="search" name="q" value="{{ q|default:'' }}" placeholder="Поиск товара..." aria-label="Search">
     <button class="btn btn-outline-primary" type="submit">Найти</button>
 </form>
 </div>

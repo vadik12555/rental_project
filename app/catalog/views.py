@@ -11,20 +11,15 @@ from django.db import transaction
 from rest_framework.exceptions import ValidationError
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
-from django.db.models import Q
 from .tasks import send_order_confirmation
 
 def item_list(request):
     q = request.GET.get("q", "").strip()
 
-    # Базовый queryset
     items_qs = Item.objects.all()
 
-    # Поиск по названию и описанию, нечувствительный к регистру
     if q:
-        items_qs = items_qs.filter(
-            Q(title__icontains=q) | Q(description__icontains=q)
-        )
+        items_qs = items_qs.filter(title__icontains=q)
         items = list(items_qs)
     else:
         # Только для полного списка используем кэш
